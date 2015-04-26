@@ -1,5 +1,24 @@
 #! /bin/bash
 
+chown jenkins:jenkins /var/jenkins_home
+
+add_extra_host() {
+	if [ -n "$ADD_HOSTS" ]; then
+		OIFS=$IFS
+		IFS=$','
+	
+		for item in $ADD_HOSTS
+		do
+	  		ip=$(echo $item | awk -F '[/:]' '{print $1}')
+	  		host=$(echo $item | awk -F '[/:]' '{print $2}')
+	  		printf '%s\t%s\n' $ip $host | tee -a /etc/hosts > /dev/null
+		done
+
+	IFS=${OIFS}
+	fi	
+}
+
+
 # Copy files from /usr/share/jenkins/ref into /var/jenkins_home
 # So the initial JENKINS-HOME is set with expected content. 
 # Don't override, as this is just a reference setup, and use from UI 
@@ -13,30 +32,16 @@ copy_reference_file() {
 	if [[ ! -e /var/jenkins_home/${rel} ]] 
 	then
 		echo "copy $rel to JENKINS_HOME"
-		mkdir -p /var/jenkins_home/${dir:23}
-		cp -r /usr/share/jenkins/ref/${rel} /var/jenkins_home/${rel}; 
+		gosu jenkins mkdir -p /var/jenkins_home/${dir:23}
+		gosu jenkins cp -r /usr/share/jenkins/ref/${rel} /var/jenkins_home/${rel}; 
 	fi; 
 }
+
+add_extra_host
+
 export -f copy_reference_file
-find /usr/share/jenkins/ref/ -type f -exec gosu jenkins bash -c 'copy_reference_file {}' \;
 
-
-if [ -n "$ADD_HOSTS" ]; then
-echo adding extra hots
-	OIFS=$IFS
-	IFS=$','
-
-	for item in $ADD_HOSTS
-	do
-  		ip=$(echo $item | awk -F '[/:]' '{print $1}')
-  		host=$(echo $item | awk -F '[/:]' '{print $2}')
-  		printf '%s\t%s\n' $ip $host | tee -a /etc/hosts > /dev/null
-	done
-
-	IFS=${OIFS}
-else
-echo no hosts
-fi
+gosu jenkins find /usr/share/jenkins/ref/ -type f -exec gosu jenkins bash -c 'copy_reference_file {}' \;
 
 
 # if `docker run` first argument start with `--` the user is passing jenkins launcher arguments
