@@ -10,8 +10,12 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/* \
 	&& curl -o /usr/local/bin/gosu.asc -SL "https://github.com/tianon/gosu/releases/download/1.2/gosu-$(dpkg --print-architecture).asc" \
 	&& gpg --verify /usr/local/bin/gosu.asc \
 	&& rm /usr/local/bin/gosu.asc \
-	&& chmod +x /usr/local/bin/gosu \
-	&& apt-get purge -y --auto-remove curl
+	&& chmod +x /usr/local/bin/gosu
+
+COPY plugins.txt /usr/share/jenkins/plugins.txt
+COPY plugins.sh /usr/local/bin/plugins.sh
+RUN /usr/local/bin/plugins.sh /usr/share/jenkins/plugins.txt
 
 COPY jenkins.sh /usr/local/bin/jenkins.sh
+
 ENTRYPOINT ["/usr/local/bin/jenkins.sh"]

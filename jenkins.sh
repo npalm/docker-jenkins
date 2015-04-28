@@ -41,7 +41,7 @@ add_extra_host
 
 export -f copy_reference_file
 
-gosu jenkins find /usr/share/jenkins/ref/ -type f -exec gosu jenkins bash -c 'copy_reference_file {}' \;
+find /usr/share/jenkins/ref/ -type f -exec bash -c 'copy_reference_file {}' \;
 
 
 # if `docker run` first argument start with `--` the user is passing jenkins launcher arguments
